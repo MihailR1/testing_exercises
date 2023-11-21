@@ -12,8 +12,11 @@ def test_change_copy_item():
 
 def test_add_add_number_of_copies_to_title_success():
     title: str = 'Copy of hello, this is word'
-    expected_result: str = f'{title} (2)'
-    assert change_copy_item(title) == expected_result
+    current: str = title
+    for i in range(1, 10):
+        expected_result: str = f'{title} ({i + 1})'
+        assert change_copy_item(current) == expected_result
+        current = expected_result
 
 
 def test_add_add_number_of_copies_to_title_failure():
