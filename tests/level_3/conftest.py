@@ -63,17 +63,31 @@ def create_expense():
 
 
 @pytest.fixture
-def list_expenses_without_fraud_transactions(
-        create_expense, popular_stores, different_dates):
-    return [
-        create_expense(
-            spent_in=random.choice(popular_stores),
-            spent_at=random.choice(different_dates),
-            amount=decimal.Decimal(random.randint(10, 4999))) for _ in range(10)
-    ]
+def create_list_with_expenses(create_expense, popular_stores, different_dates, bank_card):
+    def list_expenses(
+            number_transaction=10,
+            max_amount=4999,
+            dates=(datetime.datetime.utcnow(), ),
+            is_diffrenet_dates=True,
+            number_of_fraud_transactions=0,
+            min_fraud_chain_length=3):
 
+        list_with_expenses = [
+            create_expense(
+                spent_in=random.choice(popular_stores),
+                spent_at=random.choice(different_dates) if is_diffrenet_dates else random.choice(dates),
+                category=ExpenseCategory.SUPERMARKET,
+                currency=Currency.RUB,
+                card=bank_card,
+                amount=decimal.Decimal(random.randint(10, max_amount))) for _ in range(number_transaction)
+        ]
 
-@pytest.fixture
-def list_expenses_with_fraud_transactions(list_expenses_without_fraud_transactions):
-    choice_random = random.choices(list_expenses_without_fraud_transactions, k=2) * 3
-    return list_expenses_without_fraud_transactions + choice_random
+        if number_of_fraud_transactions > 0:
+            fraud_expenses = random.choices(
+                list_with_expenses, k=number_of_fraud_transactions) * min_fraud_chain_length
+            return list_with_expenses + fraud_expenses, fraud_expenses
+
+        return list_with_expenses
+
+    yield list_expenses
+    del list_expenses
